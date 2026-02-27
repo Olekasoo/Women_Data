@@ -49,3 +49,7 @@ women %>%
   lm(women$height ~ women$weight, data =.) %>% 
   summary()
 ```
+
+```{r}
+cor.test(women$height, women$weight)
+```

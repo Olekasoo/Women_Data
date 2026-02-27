@@ -59,3 +59,71 @@ plot(hist(women$height))
 ```
 
 ![](Output_files/figure-commonmark/unnamed-chunk-4-1.png)
+
+I also would wish to add model.
+
+``` r
+library(tidyverse)
+```
+
+    ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ✔ dplyr     1.1.4     ✔ readr     2.1.5
+    ✔ forcats   1.0.0     ✔ stringr   1.5.1
+    ✔ ggplot2   4.0.2     ✔ tibble    3.2.1
+    ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+    ✔ purrr     1.0.4     
+    ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ✖ dplyr::filter() masks stats::filter()
+    ✖ dplyr::lag()    masks stats::lag()
+    ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+
+``` r
+women %>% 
+  ggplot(aes(x=height, y=weight))+
+  geom_smooth(method ="lm", se =TRUE)
+```
+
+    `geom_smooth()` using formula = 'y ~ x'
+
+![](Output_files/figure-commonmark/unnamed-chunk-5-1.png)
+
+``` r
+women %>% 
+  lm(women$height ~ women$weight, data =.) %>% 
+  summary()
+```
+
+
+    Call:
+    lm(formula = women$height ~ women$weight, data = .)
+
+    Residuals:
+         Min       1Q   Median       3Q      Max 
+    -0.83233 -0.26249  0.08314  0.34353  0.49790 
+
+    Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+    (Intercept)  25.723456   1.043746   24.64 2.68e-12 ***
+    women$weight  0.287249   0.007588   37.85 1.09e-14 ***
+    ---
+    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    Residual standard error: 0.44 on 13 degrees of freedom
+    Multiple R-squared:  0.991, Adjusted R-squared:  0.9903 
+    F-statistic:  1433 on 1 and 13 DF,  p-value: 1.091e-14
+
+``` r
+cor.test(women$height, women$weight)
+```
+
+
+        Pearson's product-moment correlation
+
+    data:  women$height and women$weight
+    t = 37.855, df = 13, p-value = 1.091e-14
+    alternative hypothesis: true correlation is not equal to 0
+    95 percent confidence interval:
+     0.9860970 0.9985447
+    sample estimates:
+          cor 
+    0.9954948 
