@@ -7,13 +7,9 @@ format:
     fig-height: 5
 ---
 
-## Quarto
+## START
 
-Quarto enables you to weave together content and executable code into a finished document.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+This is the beginning of descriptive analysis of the women dataset that is available in R, it shall form part of a journey of a thousand miles:
 
 ```{r}
 women
@@ -82,7 +78,9 @@ ACF plot
 acf(y)
 ```
 
-Predictions : linear
+# Predictions 
+
+linear
 
 ```{r}
 predict(lm(y ~x), data.frame(x =73))
@@ -125,7 +123,7 @@ t.test(y, mu =140)
 mean(y)
 ```
 
-Hypothesis Tests
+# Hypothesis Tests
 
 ```{r}
 t.test(y[1:7], y[8:15])

@@ -1,21 +1,16 @@
 # My Analysis
 
 
-- [Quarto](#quarto)
-- [Running Code](#running-code)
+- [START](#start)
 - [Descriptive Statistics.](#descriptive-statistics)
 - [](#section)
+- [Predictions](#predictions)
+- [Hypothesis Tests](#hypothesis-tests)
 
-## Quarto
+## START
 
-Quarto enables you to weave together content and executable code into a
-finished document.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that
-includes both content and the output of embedded code. You can embed
-code like this:
+This is the beginning of descriptive analysis of the women dataset that
+is available in R, it shall form part of a journey of a thousand miles:
 
 ``` r
 women
@@ -135,7 +130,9 @@ acf(y)
 
 ![](Output_files/figure-commonmark/unnamed-chunk-11-1.png)
 
-Predictions : linear
+# Predictions
+
+linear
 
 ``` r
 predict(lm(y ~x), data.frame(x =73))
@@ -190,8 +187,8 @@ library(randomForest)
 predict(randomForest(y ~x, ntree =50), data.frame(x =73))
 ```
 
-         1 
-    157.46 
+          1 
+    157.123 
 
 ``` r
 t.test(y, mu =140)
@@ -215,7 +212,7 @@ mean(y)
 
     [1] 136.7333
 
-Hypothesis Tests
+# Hypothesis Tests
 
 ``` r
 t.test(y[1:7], y[8:15])
