@@ -1,0 +1,51 @@
+---
+title: "My Analysis"
+format: 
+  gfm:
+    toc: true
+    fig-width: 7
+    fig-height: 5
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+women
+```
+
+You can add options to executable code like this
+
+```{r}
+str(women)
+```
+
+some Analysis of Women data.
+
+```{r}
+cor(women$height,women$weight)
+```
+
+```{r}
+plot(hist(women$height))
+```
+
+I also would wish to add model.
+
+```{r}
+library(tidyverse)
+women %>% 
+  ggplot(aes(x=height, y=weight))+
+  geom_smooth(method ="lm", se =TRUE)
+```
+
+```{r}
+women %>% 
+  lm(women$height ~ women$weight, data =.) %>% 
+  summary()
+```
