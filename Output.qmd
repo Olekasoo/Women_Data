@@ -25,31 +25,160 @@ You can add options to executable code like this
 str(women)
 ```
 
-some Analysis of Women data.
+# Descriptive Statistics.
+
+# 
 
 ```{r}
-cor(women$height,women$weight)
+df <- data.frame(
+  age = 58:72,
+  height = c(115, 117, 120, 123, 126, 129, 132, 135, 
+            139, 142, 146, 150, 154, 159, 164)
+  )
+df
 ```
 
 ```{r}
-plot(hist(women$height))
+x <- women$height
+y <- women$weight
+
 ```
 
-I also would wish to add model.
+```{r}
+plot(x,y)
+```
 
 ```{r}
-library(tidyverse)
+plot(x, y, type ='l')
+```
+
+Barchart
+
+```{r}
+barplot(y, names.arg = x)
+```
+
+Density plot
+
+```{r}
+plot(density(y))
+```
+
+Q-Q plot
+
+```{r}
+qqnorm(y); qqline(y)
+```
+
+Residuals
+
+```{r}
+plot(x, resid(lm(y ~ x)))
+```
+
+ACF plot
+
+```{r}
+acf(y)
+```
+
+Predictions : linear
+
+```{r}
+predict(lm(y ~x), data.frame(x =73))
+```
+
+```{r}
+predict(lm(y ~poly(x,2)), data.frame(x=73))
+#quad pred
+```
+
+Linear Interpolation
+
+```{r}
+approx(x, y, xout = 73)$y
+```
+
+Spline Interplolation
+
+```{r}
+spline(x, y, xout = 73)$y
+```
+
+LOESS
+
+```{r}
+#loess(y ~ x) %>% 
+ # predict(data.frame(x=73))
+```
+
+```{r}
+library(randomForest)
+predict(randomForest(y ~x, ntree =50), data.frame(x =73))
+```
+
+```{r}
+t.test(y, mu =140)
+```
+
+```{r}
+mean(y)
+```
+
+Hypothesis Tests
+
+```{r}
+t.test(y[1:7], y[8:15])
+```
+
+Test Equal Variances
+
+```{r}
+var.test(y[1:7], y[8:15])
+```
+
+Wilcoxon For Non-Parametric
+
+```{r}
+wilcox.test(y[1:7], y[8:15])
+```
+
+Normality Test
+
+```{r}
+shapiro.test(y)
+```
+
+Distribution Test
+
+```{r}
+ks.test(y,"pnorm", mean(y), sd(y))
+```
+
+Chi-square Goodness of Fit
+
+```{r}
+chisq.test(table(cut(y,3)))
+
+```
+
+```{r}
+library(dplyr)
 women %>% 
-  ggplot(aes(x=height, y=weight))+
-  geom_smooth(method ="lm", se =TRUE)
-```
-
-```{r}
-women %>% 
-  lm(women$height ~ women$weight, data =.) %>% 
+  lm(x ~ y, data =.) %>% 
   summary()
 ```
 
+F-Test For regression
+
 ```{r}
-cor.test(women$height, women$weight)
+summary(lm(x ~ y))$fstatistic
+```
+
+Durbin-Watson Test
+
+```{r}
+
+library(lmtest)
+dwtest(lm(x ~y))
 ```
