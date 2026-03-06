@@ -187,8 +187,8 @@ library(randomForest)
 predict(randomForest(y ~x, ntree =50), data.frame(x =73))
 ```
 
-           1 
-    156.2793 
+          1 
+    157.949 
 
 ``` r
 t.test(y, mu =140)
