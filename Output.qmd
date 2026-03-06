@@ -78,7 +78,7 @@ ACF plot
 acf(y)
 ```
 
-# Predictions 
+# Predictions
 
 linear
 
@@ -179,4 +179,8 @@ Durbin-Watson Test
 
 library(lmtest)
 dwtest(lm(x ~y))
+```
+
+```{r}
+cor(x,y)
 ```

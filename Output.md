@@ -187,8 +187,8 @@ library(randomForest)
 predict(randomForest(y ~x, ntree =50), data.frame(x =73))
 ```
 
-          1 
-    157.123 
+           1 
+    156.2793 
 
 ``` r
 t.test(y, mu =140)
@@ -376,3 +376,9 @@ dwtest(lm(x ~y))
     data:  lm(x ~ y)
     DW = 0.31156, p-value = 9.623e-08
     alternative hypothesis: true autocorrelation is greater than 0
+
+``` r
+cor(x,y)
+```
+
+    [1] 0.9954948
