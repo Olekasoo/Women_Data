@@ -184,3 +184,818 @@ dwtest(lm(x ~y))
 ```{r}
 cor(x,y)
 ```
+
+```{r}
+library(readr)
+ai_job_replacement_2020_2026_v2 <- read_csv("D:/Desktop/ai_job_replacement_2020_2026_v2.csv")
+```
+
+```{r}
+str(ai_job_replacement_2020_2026_v2)
+```
+
+`{View(ai_job_replacement_2020_2026_v2)}`
+
+```{r}
+colSums(is.na(ai_job_replacement_2020_2026_v2))
+```
+
+```{r}
+names(ai_job_replacement_2020_2026_v2)
+```
+
+```{r}
+
+#install.packages(c("tidyverse", "skimr", "GGally", "corrplot"))
+
+# Load packages
+library(tidyverse)
+library(skimr)
+library(GGally)
+library(corrplot)
+```
+
+```{r}
+df <-ai_job_replacement_2020_2026_v2
+df
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+dim(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+# 3. Check for missing values
+colSums(is.na(df))
+```
+
+```{r}
+# 4. Clean column names
+library(tidyverse)
+
+```
+
+```{r}
+# 5. Convert categorical variables to factors
+df$job_role <- as.factor(df$job_role)
+df$industry <- as.factor(df$industry)
+df$country <- as.factor(df$country)
+df$education_requirement_level <- as.factor(df$education_requirement_level)
+```
+
+```{r}
+# 6. Check factor levels
+levels(df$job_role)[1:20]
+levels(df$industry)
+levels(df$country)
+levels(df$education_requirement_level)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+# 7. Create derived columns
+df <- df %>%
+  mutate(
+    # Year categories
+    year_category = case_when(
+      year <= 2022 ~ "Past",
+      year <= 2024 ~ "Present",
+      TRUE ~ "Future"
+    ),
+    # Risk brackets
+    risk_bracket = case_when(
+      automation_risk_percent < 33 ~ "Low Risk",
+      automation_risk_percent < 67 ~ "Medium Risk",
+      TRUE ~ "High Risk"
+    )
+  )
+```
+
+```{r}
+# 8. Make them factors
+df$year_category <- factor(df$year_category, levels = c("Past", "Present", "Future"))
+df$risk_bracket <- factor(df$risk_bracket, levels = c("Low Risk", "Medium Risk", "High Risk"))
+```
+
+```{r}
+# 9. Quick summary of numerical columns
+df %>%
+  select(where(is.numeric)) %>%
+  summary()
+```
+
+```{r}
+# 10. Save cleaned data
+write.csv(df, "ai_job_replacement_cleaned.csv", row.names = FALSE)
+
+```
+
+## **Descriptive Analysis with Visualizations**
+
+```{r}
+# Load visualization libraries
+library(ggplot2)
+library(viridis)
+library(gridExtra)
+```
+
+```{r}
+# Set theme
+theme_set(theme_minimal() + 
+          theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+                axis.text.x = element_text(angle = 45, hjust = 1)))
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 1 & 2: Job Risk and Salary Trends
+# ============================================
+
+# 1.1 Rank jobs by automation risk
+job_risk <- df %>%
+  group_by(job_role) %>%
+  summarise(
+    avg_risk = mean(automation_risk_percent),
+    avg_salary_change = mean(salary_change_percent),
+    count = n()
+  ) %>%
+  arrange(desc(avg_risk))
+```
+
+```{r}
+# Top 10 and bottom 10
+top_10 <- head(job_risk, 10)
+bottom_10 <- tail(job_risk, 10)
+```
+
+```{r}
+# Combine for plotting
+risk_plot_data <- rbind(
+  cbind(top_10, category = "Highest Risk"),
+  cbind(bottom_10, category = "Lowest Risk")
+)
+```
+
+```{r}
+# Bar plot
+ggplot(risk_plot_data, aes(x = reorder(job_role, avg_risk), 
+                            y = avg_risk, fill = category)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("Highest Risk" = "red", "Lowest Risk" = "green")) +
+  labs(title = "Jobs with Highest and Lowest Automation Risk",
+       x = "Job Role", y = "Average Automation Risk (%)")
+```
+
+```{r}
+# 1.2 Risk vs Salary Change scatter plot
+ggplot(df, aes(x = automation_risk_percent, y = salary_change_percent)) +
+  geom_point(alpha = 0.3, color = "blue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Automation Risk vs Salary Change",
+       x = "Automation Risk (%)", y = "Salary Change (%)")
+```
+
+```{r}
+# 1.3 Correlation
+cor(df$automation_risk_percent, df$salary_change_percent, use = "complete.obs")
+```
+
+```{r}
+# 1.4 Box plot by risk bracket
+ggplot(df, aes(x = risk_bracket, y = salary_change_percent, fill = risk_bracket)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Low Risk" = "green", "Medium Risk" = "orange", "High Risk" = "red")) +
+  labs(title = "Salary Change by Risk Category", x = "Risk Category", y = "Salary Change (%)") +
+  theme(legend.position = "none")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 3: Industry and Country Vulnerability
+# ============================================
+
+# 3.1 Industry summary
+industry_summary <- df %>%
+  group_by(industry) %>%
+  summarise(
+    avg_risk = mean(automation_risk_percent),
+    avg_ai_score = mean(ai_replacement_score),
+    avg_adoption = mean(ai_adoption_level),
+    count = n()
+  ) %>%
+  arrange(desc(avg_risk))
+```
+
+```{r}
+industry_summary
+```
+
+```{r}
+# Industry bar plot
+ggplot(industry_summary, aes(x = reorder(industry, avg_risk), y = avg_risk)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Industry Vulnerability to AI", x = "Industry", y = "Avg Automation Risk (%)")
+```
+
+```{r}
+# 3.2 Country summary
+country_summary <- df %>%
+  group_by(country) %>%
+  summarise(
+    avg_risk = mean(automation_risk_percent),
+    avg_ai_score = mean(ai_replacement_score),
+    avg_adoption = mean(ai_adoption_level),
+    count = n()
+  ) %>%
+  arrange(desc(avg_risk))
+
+# View
+country_summary
+```
+
+```{r}
+# Country bar plot
+ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
+  geom_bar(stat = "identity", fill = "darkred") +
+  coord_flip() +
+  labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
+```
+
+```{r}
+# Country bar plot
+ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
+  geom_bar(stat = "identity", fill = "darkred") +
+  coord_flip() +
+  labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
+
+# 3.3 Simple heatmap of top industries and countries
+# Get top 5 industries and countries
+top_industries <- head(industry_summary$industry, 5)
+top_countries <- head(country_summary$country, 5)
+
+# Filter data
+heatmap_data <- df %>%
+  filter(industry %in% top_industries, country %in% top_countries) %>%
+  group_by(industry, country) %>%
+  summarise(avg_risk = mean(automation_risk_percent), .groups = "drop")
+```
+
+```{r}
+# Simple heatmap
+ggplot(heatmap_data, aes(x = country, y = industry, fill = avg_risk)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Automation Risk: Top Industries vs Countries", fill = "Risk %")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 4: Reskilling Gap
+# ============================================
+
+# 4.1 Skill gap vs reskilling urgency
+ggplot(df, aes(x = skill_gap_index, y = reskilling_urgency_score)) +
+  geom_point(alpha = 0.3, color = "purple") +
+  geom_smooth(method = "lm", color = "black") +
+  labs(title = "Skill Gap vs Reskilling Urgency",
+       x = "Skill Gap Index", y = "Reskilling Urgency")
+```
+
+```{r}
+# Correlation
+cor(df$skill_gap_index, df$reskilling_urgency_score, use = "complete.obs")
+```
+
+```{r}
+# 4.2 Jobs with highest reskilling urgency
+top_reskilling <- df %>%
+  group_by(job_role) %>%
+  summarise(
+    urgency = mean(reskilling_urgency_score),
+    risk = mean(automation_risk_percent)
+  ) %>%
+  arrange(desc(urgency)) %>%
+ head(15)
+```
+
+```{r}
+# Plot
+ggplot(top_reskilling, aes(x = reorder(job_role, urgency), y = urgency, fill = risk)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  labs(title = "Top 15 Jobs Requiring Urgent Reskilling",
+       x = "Job Role", y = "Reskilling Urgency", fill = "Risk %")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 5: Remote Work as Mitigating Factor
+# ============================================
+
+# 5.1 Remote feasibility vs automation risk
+ggplot(df, aes(x = remote_feasibility_score, y = automation_risk_percent)) +
+  geom_point(alpha = 0.3, color = "darkgreen") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "Remote Feasibility vs Automation Risk",
+       x = "Remote Feasibility Score", y = "Automation Risk (%)")
+```
+
+```{r}
+# Correlation
+cor(df$remote_feasibility_score, df$automation_risk_percent, use = "complete.obs")
+
+```
+
+```{r}
+# 5.2 Remote feasibility by industry
+ggplot(df, aes(x = reorder(industry, remote_feasibility_score, FUN = median), 
+               y = remote_feasibility_score)) +
+  geom_boxplot(fill = "lightblue") +
+  coord_flip() +
+  labs(title = "Remote Feasibility by Industry",
+       x = "Industry", y = "Remote Feasibility Score")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 6: Educational Requirements
+# ============================================
+
+# 6.1 Automation risk by education level
+ggplot(df, aes(x = education_requirement_level, y = automation_risk_percent)) +
+  geom_boxplot(fill = "orange") +
+  labs(title = "Automation Risk by Education Level",
+       x = "Education Level (1=Lowest, 5=Highest)", y = "Automation Risk (%)")
+```
+
+```{r}
+# 6.2 Salary by education level
+ggplot(df, aes(x = education_requirement_level, y = salary_before_usd / 1000)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(title = "Salary by Education Level",
+       x = "Education Level (1=Lowest, 5=Highest)", y = "Salary (thousands USD)")
+```
+
+```{r}
+# 6.3 Summary table
+edu_summary <- df %>%
+  group_by(education_requirement_level) %>%
+  summarise(
+    avg_risk = mean(automation_risk_percent),
+    avg_salary = mean(salary_before_usd),
+    avg_salary_change = mean(salary_change_percent),
+    count = n()
+  )
+```
+
+```{r}
+# View
+edu_summary
+```
+
+## **Simple Predictive Models**
+
+```{r}
+# Load modeling libraries
+library(randomForest)
+#library(caret)
+set.seed(123)
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 7: Predicting Salary Change
+# ============================================
+
+# Prepare data
+model_df <- df %>%
+  select(job_role, industry, country, year,
+         automation_risk_percent, ai_replacement_score,
+         skill_gap_index, salary_before_usd,
+         remote_feasibility_score, ai_adoption_level,
+         education_requirement_level, salary_change_percent) %>%
+  na.omit()
+```
+
+```{r}
+# Split data
+set.seed(123)
+train_idx <- sample(1:nrow(model_df), 0.7 * nrow(model_df))
+train <- model_df[train_idx, ]
+test <- model_df[-train_idx, ]
+```
+
+```{r}
+# Simple Random Forest model
+rf_salary <- randomForest(
+  salary_change_percent ~ .,
+  data = train,
+  ntree = 100,
+  importance = TRUE
+)
+```
+
+```{r}
+# Predictions
+predictions <- predict(rf_salary, test)
+```
+
+```{r}
+# Calculate RMSE (Root Mean Square Error)
+rmse <- sqrt(mean((predictions - test$salary_change_percent)^2))
+print(paste("RMSE:", round(rmse, 3)))
+```
+
+```{r}
+# Calculate R-squared
+ss_res <- sum((test$salary_change_percent - predictions)^2)
+ss_tot <- sum((test$salary_change_percent - mean(test$salary_change_percent))^2)
+r2 <- 1 - (ss_res / ss_tot)
+print(paste("R-squared:", round(r2, 3)))
+```
+
+```{r}
+# Feature importance
+importance_df <- data.frame(
+  feature = rownames(importance(rf_salary)),
+  importance = importance(rf_salary)[, "%IncMSE"]
+) %>%
+  arrange(desc(importance))
+```
+
+```{r}
+# Plot top 10 features
+head(importance_df, 10) %>%
+  ggplot(aes(x = reorder(feature, importance), y = importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top Factors Affecting Salary Change",
+       x = "Feature", y = "Importance")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 8: Classifying Job Risk
+# ============================================
+
+# Create classification dataset
+class_df <- df %>%
+  select(job_role, industry, country, year,
+         ai_replacement_score, skill_gap_index,
+         remote_feasibility_score, ai_adoption_level,
+         education_requirement_level, risk_bracket) %>%
+  na.omit()
+```
+
+```{r}
+# Split
+set.seed(123)
+train_idx_c <- sample(1:nrow(class_df), 0.7 * nrow(class_df))
+train_c <- class_df[train_idx_c, ]
+test_c <- class_df[-train_idx_c, ]
+```
+
+```{r}
+# Random Forest Classifier
+rf_class <- randomForest(
+  risk_bracket ~ .,
+  data = train_c,
+  ntree = 100,
+  importance = TRUE
+)
+```
+
+```{r}
+# Predictions
+pred_class <- predict(rf_class, test_c)
+```
+
+```{r}
+# Confusion Matrix
+table(Predicted = pred_class, Actual = test_c$risk_bracket)
+```
+
+```{r}
+# Accuracy
+accuracy <- mean(pred_class == test_c$risk_bracket)
+print(paste("Accuracy:", round(accuracy, 3)))
+```
+
+```{r}
+# Feature importance for classification
+class_imp <- data.frame(
+  feature = rownames(importance(rf_class)),
+  importance = importance(rf_class)[, "MeanDecreaseGini"]
+) %>%
+  arrange(desc(importance))
+```
+
+```{r}
+# Plot
+head(class_imp, 10) %>%
+  ggplot(aes(x = reorder(feature, importance), y = importance)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top Factors for Predicting Risk Category",
+       x = "Feature", y = "Importance")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 9: Predicting Reskilling Urgency
+# ============================================
+
+# Similar to Objective 7 but with different target
+urgency_df <- df %>%
+  select(job_role, industry, country, year,
+         automation_risk_percent, ai_replacement_score,
+         skill_gap_index, remote_feasibility_score,
+         ai_adoption_level, education_requirement_level,
+         reskilling_urgency_score) %>%
+  na.omit()
+```
+
+```{r}
+# Split
+set.seed(123)
+train_idx_u <- sample(1:nrow(urgency_df), 0.7 * nrow(urgency_df))
+train_u <- urgency_df[train_idx_u, ]
+test_u <- urgency_df[-train_idx_u, ]
+```
+
+```{r}
+# Random Forest for urgency
+rf_urgency <- randomForest(
+  reskilling_urgency_score ~ .,
+  data = train_u,
+  ntree = 100,
+  importance = TRUE
+)
+```
+
+```{r}
+# Predictions
+pred_urgency <- predict(rf_urgency, test_u)
+```
+
+```{r}
+# RMSE
+rmse_u <- sqrt(mean((pred_urgency - test_u$reskilling_urgency_score)^2))
+print(paste("Reskilling Urgency RMSE:", round(rmse_u, 3)))
+```
+
+```{r}
+# Feature importance
+urgency_imp <- data.frame(
+  feature = rownames(importance(rf_urgency)),
+  importance = importance(rf_urgency)[, "%IncMSE"]
+) %>%
+  arrange(desc(importance))
+```
+
+```{r}
+# Plot
+head(urgency_imp, 10) %>%
+  ggplot(aes(x = reorder(feature, importance), y = importance)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  coord_flip() +
+  labs(title = "Top Factors Affecting Reskilling Urgency",
+       x = "Feature", y = "Importance")
+```
+
+## **Advanced Analysis**
+
+```{r}
+# ============================================
+# OBJECTIVE 10: Temporal Analysis
+# ============================================
+
+# Yearly trends
+yearly <- df %>%
+  group_by(year) %>%
+  summarise(
+    risk = mean(automation_risk_percent),
+    adoption = mean(ai_adoption_level),
+    ai_score = mean(ai_replacement_score),
+    salary_change = mean(salary_change_percent)
+  )
+```
+
+```{r}
+# Plot multiple trends
+par(mfrow = c(2, 2))
+plot(yearly$year, yearly$risk, type = "b", col = "red", 
+     xlab = "Year", ylab = "Risk %", main = "Automation Risk Trend")
+plot(yearly$year, yearly$adoption, type = "b", col = "blue",
+     xlab = "Year", ylab = "Adoption Level", main = "AI Adoption Trend")
+plot(yearly$year, yearly$ai_score, type = "b", col = "green",
+     xlab = "Year", ylab = "AI Score", main = "AI Replacement Score Trend")
+plot(yearly$year, yearly$salary_change, type = "b", col = "purple",
+     xlab = "Year", ylab = "Salary Change %", main = "Salary Change Trend")
+par(mfrow = c(1, 1))
+```
+
+```{r}
+# Trends by country (top 5 countries)
+top_countries <- names(sort(table(df$country), decreasing = TRUE)[1:5])
+
+df %>%
+  filter(country %in% top_countries) %>%
+  group_by(country, year) %>%
+  summarise(avg_risk = mean(automation_risk_percent), .groups = "drop") %>%
+  ggplot(aes(x = year, y = avg_risk, color = country, group = country)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Automation Risk Trends by Country",
+       x = "Year", y = "Avg Risk (%)")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 11: Simple Cluster Analysis
+# ============================================
+
+# Prepare job-level data
+job_data <- df %>%
+  group_by(job_role) %>%
+  summarise(
+    risk = mean(automation_risk_percent),
+    ai_score = mean(ai_replacement_score),
+    skill_gap = mean(skill_gap_index),
+    remote = mean(remote_feasibility_score),
+    urgency = mean(reskilling_urgency_score),
+    count = n()
+  ) %>%
+  filter(count > 10)  # Only jobs with enough data
+```
+
+```{r}
+# Scale the data
+job_scaled <- scale(job_data[, c("risk", "ai_score", "skill_gap", "remote", "urgency")])
+```
+
+```{r}
+# Try 3 clusters
+set.seed(123)
+kmeans_result <- kmeans(job_scaled, centers = 3, nstart = 25)
+```
+
+```{r}
+# Add cluster to data
+job_data$cluster <- as.factor(kmeans_result$cluster)
+```
+
+```{r}
+# View cluster characteristics
+job_data %>%
+  group_by(cluster) %>%
+  summarise(
+    avg_risk = mean(risk),
+    avg_ai_score = mean(ai_score),
+    avg_skill_gap = mean(skill_gap),
+    avg_remote = mean(remote),
+    avg_urgency = mean(urgency),
+    count = n()
+  )
+```
+
+```{r}
+# Visualize clusters (using first two principal components)
+pca <- prcomp(job_scaled)
+plot_data <- data.frame(
+  PC1 = pca$x[, 1],
+  PC2 = pca$x[, 2],
+  cluster = job_data$cluster,
+  job = job_data$job_role
+)
+
+ggplot(plot_data, aes(x = PC1, y = PC2, color = cluster, label = job)) +
+  geom_point(size = 3) +
+  #geom_text_repel(size = 2, max.overlaps = 5) +
+  labs(title = "Job Clusters Based on AI Risk Factors") +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 12: The AI Paradox
+# ============================================
+
+# Industry-level analysis
+industry_paradox <- df %>%
+  group_by(industry) %>%
+  summarise(
+    adoption = mean(ai_adoption_level),
+    risk = mean(automation_risk_percent),
+    count = n()
+  )
+
+```
+
+```{r}
+# Scatter plot
+ggplot(industry_paradox, aes(x = adoption, y = risk, label = industry)) +
+  geom_point(size = 4, aes(color = count)) +
+  #geom_text_repel() +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "AI Paradox: Adoption vs Risk by Industry",
+       x = "Average AI Adoption Level", y = "Average Automation Risk (%)",
+       color = "Sample Size") +
+  geom_smooth(method = "lm", se = FALSE, color = "gray", linetype = "dashed")
+```
+
+```{r}
+# Correlation
+cor(industry_paradox$adoption, industry_paradox$risk)
+```
+
+```{r}
+# ============================================
+# OBJECTIVE 13: Globalization of AI Risk
+# ============================================
+
+# Select a few common job roles
+common_jobs <- c("Software Engineer", "Data Analyst", "Teacher", 
+                 "Financial Analyst", "Customer Support Rep")
+
+# Filter data
+job_country <- df %>%
+  filter(job_role %in% common_jobs) %>%
+  group_by(job_role, country) %>%
+  summarise(avg_risk = mean(automation_risk_percent), .groups = "drop")
+```
+
+```{r}
+# Create bar plot
+ggplot(job_country, aes(x = country, y = avg_risk, fill = job_role)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Automation Risk by Country for Selected Jobs",
+       x = "Country", y = "Average Automation Risk (%)", fill = "Job Role") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# Alternative: heatmap
+job_country_matrix <- job_country %>%
+  pivot_wider(names_from = country, values_from = avg_risk, values_fill = 0)
+
+job_country_matrix %>%
+  pivot_longer(-job_role, names_to = "country", values_to = "risk") %>%
+  ggplot(aes(x = country, y = job_role, fill = risk)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Heatmap of AI Risk: Jobs vs Countries",
+       x = "Country", y = "Job Role", fill = "Risk %")
+```
+
+```{r}
+# ============================================
+# FINAL SUMMARY: Key Insights
+# ============================================
+
+# Create a simple summary of the most important findings
+```
+
+```{r}
+# 1. Most and least risky jobs
+most_risky <- head(job_risk$job_role, 3)
+least_risky <- tail(job_risk$job_role, 3)
+
+# 2. Most vulnerable industries
+top_risky_industries <- head(industry_summary$industry, 3)
+
+# 3. Most vulnerable countries
+top_risky_countries <- head(country_summary$country, 3)
+
+# 4. Education and risk
+edu_risk_correlation <- cor(as.numeric(df$education_requirement_level), 
+                            df$automation_risk_percent, use = "complete.obs")
+```
+
+```{r}
+# Print summary
+print("=== KEY INSIGHTS ===")
+print(paste("Most risky jobs:", paste(most_risky, collapse = ", ")))
+print(paste("Least risky jobs:", paste(least_risky, collapse = ", ")))
+print(paste("Most vulnerable industries:", paste(top_risky_industries, collapse = ", ")))
+print(paste("Most vulnerable countries:", paste(top_risky_countries, collapse = ", ")))
+print(paste("Education vs Risk correlation:", round(edu_risk_correlation, 3)))
+print(paste("Remote work reduces risk (correlation):", 
+            round(cor(df$remote_feasibility_score, df$automation_risk_percent), 3)))
+print(paste("Higher skill gap = higher reskilling urgency (correlation):",
+            round(cor(df$skill_gap_index, df$reskilling_urgency_score), 3)))
+```
