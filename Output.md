@@ -1,11 +1,10 @@
-# My Analysis
+# AI and the Global Workforce
 
 
-- [START](#start)
-- [Descriptive Statistics.](#descriptive-statistics)
-- [](#section)
-- [Predictions](#predictions)
-- [Hypothesis Tests](#hypothesis-tests)
+- [The Future of Work in the Age of AI: A Comprehensive Analysis of Job
+  Displacement, Reskilling Needs, and Salary Trends Across 8 Countries
+  and 12 Industries
+  (2020-2026).](#the-future-of-work-in-the-age-of-ai-a-comprehensive-analysis-of-job-displacement-reskilling-needs-and-salary-trends-across-8-countries-and-12-industries-2020-2026)
   - [**Descriptive Analysis with
     Visualizations**](#descriptive-analysis-with-visualizations)
   - [Automation Risk by Industry](#automation-risk-by-industry)
@@ -18,381 +17,7 @@
   - [**Simple Predictive Models**](#simple-predictive-models)
   - [**Advanced Analysis**](#advanced-analysis)
 
-## START
-
-This is the beginning of descriptive analysis of the women dataset that
-is available in R, it shall form part of a journey of a thousand miles:
-
-``` r
-women
-```
-
-       height weight
-    1      58    115
-    2      59    117
-    3      60    120
-    4      61    123
-    5      62    126
-    6      63    129
-    7      64    132
-    8      65    135
-    9      66    139
-    10     67    142
-    11     68    146
-    12     69    150
-    13     70    154
-    14     71    159
-    15     72    164
-
-You can add options to executable code like this
-
-``` r
-str(women)
-```
-
-    'data.frame':   15 obs. of  2 variables:
-     $ height: num  58 59 60 61 62 63 64 65 66 67 ...
-     $ weight: num  115 117 120 123 126 129 132 135 139 142 ...
-
-# Descriptive Statistics.
-
-# 
-
-``` r
-df <- data.frame(
-  age = 58:72,
-  height = c(115, 117, 120, 123, 126, 129, 132, 135, 
-            139, 142, 146, 150, 154, 159, 164)
-  )
-df
-```
-
-       age height
-    1   58    115
-    2   59    117
-    3   60    120
-    4   61    123
-    5   62    126
-    6   63    129
-    7   64    132
-    8   65    135
-    9   66    139
-    10  67    142
-    11  68    146
-    12  69    150
-    13  70    154
-    14  71    159
-    15  72    164
-
-``` r
-x <- women$height
-y <- women$weight
-```
-
-``` r
-plot(x,y)
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-5-1.png)
-
-``` r
-plot(x, y, type ='l')
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-6-1.png)
-
-Barchart
-
-``` r
-barplot(y, names.arg = x)
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-7-1.png)
-
-Density plot
-
-``` r
-plot(density(y))
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-8-1.png)
-
-Q-Q plot
-
-``` r
-qqnorm(y); qqline(y)
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-9-1.png)
-
-Residuals
-
-``` r
-plot(x, resid(lm(y ~ x)))
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-10-1.png)
-
-ACF plot
-
-``` r
-acf(y)
-```
-
-![](Output_files/figure-commonmark/unnamed-chunk-11-1.png)
-
-# Predictions
-
-linear
-
-``` r
-predict(lm(y ~x), data.frame(x =73))
-```
-
-           1 
-    164.3333 
-
-``` r
-predict(lm(y ~poly(x,2)), data.frame(x=73))
-```
-
-           1 
-    168.0989 
-
-``` r
-#quad pred
-```
-
-Linear Interpolation
-
-``` r
-approx(x, y, xout = 73)$y
-```
-
-    [1] NA
-
-Spline Interplolation
-
-``` r
-spline(x, y, xout = 73)$y
-```
-
-    [1] 167.8803
-
-LOESS
-
-``` r
-#loess(y ~ x) %>% 
- # predict(data.frame(x=73))
-```
-
-``` r
-library(randomForest)
-```
-
-    randomForest 4.7-1.2
-
-    Type rfNews() to see new features/changes/bug fixes.
-
-``` r
-predict(randomForest(y ~x, ntree =50), data.frame(x =73))
-```
-
-           1 
-    157.0463 
-
-``` r
-t.test(y, mu =140)
-```
-
-
-        One Sample t-test
-
-    data:  y
-    t = -0.81631, df = 14, p-value = 0.428
-    alternative hypothesis: true mean is not equal to 140
-    95 percent confidence interval:
-     128.1504 145.3162
-    sample estimates:
-    mean of x 
-     136.7333 
-
-``` r
-mean(y)
-```
-
-    [1] 136.7333
-
-# Hypothesis Tests
-
-``` r
-t.test(y[1:7], y[8:15])
-```
-
-
-        Welch Two Sample t-test
-
-    data:  y[1:7] and y[8:15]
-    t = -5.9795, df = 11.872, p-value = 6.706e-05
-    alternative hypothesis: true difference in means is not equal to 0
-    95 percent confidence interval:
-     -34.77840 -16.18588
-    sample estimates:
-    mean of x mean of y 
-     123.1429  148.6250 
-
-Test Equal Variances
-
-``` r
-var.test(y[1:7], y[8:15])
-```
-
-
-        F test to compare two variances
-
-    data:  y[1:7] and y[8:15]
-    F = 0.38927, num df = 6, denom df = 7, p-value = 0.2708
-    alternative hypothesis: true ratio of variances is not equal to 1
-    95 percent confidence interval:
-     0.07605086 2.21709666
-    sample estimates:
-    ratio of variances 
-             0.3892737 
-
-Wilcoxon For Non-Parametric
-
-``` r
-wilcox.test(y[1:7], y[8:15])
-```
-
-
-        Wilcoxon rank sum exact test
-
-    data:  y[1:7] and y[8:15]
-    W = 0, p-value = 0.0003108
-    alternative hypothesis: true location shift is not equal to 0
-
-Normality Test
-
-``` r
-shapiro.test(y)
-```
-
-
-        Shapiro-Wilk normality test
-
-    data:  y
-    W = 0.96036, p-value = 0.6986
-
-Distribution Test
-
-``` r
-ks.test(y,"pnorm", mean(y), sd(y))
-```
-
-
-        Exact one-sample Kolmogorov-Smirnov test
-
-    data:  y
-    D = 0.091099, p-value = 0.9984
-    alternative hypothesis: two-sided
-
-Chi-square Goodness of Fit
-
-``` r
-chisq.test(table(cut(y,3)))
-```
-
-
-        Chi-squared test for given probabilities
-
-    data:  table(cut(y, 3))
-    X-squared = 0.4, df = 2, p-value = 0.8187
-
-``` r
-library(dplyr)
-```
-
-
-    Attaching package: 'dplyr'
-
-    The following object is masked from 'package:randomForest':
-
-        combine
-
-    The following objects are masked from 'package:stats':
-
-        filter, lag
-
-    The following objects are masked from 'package:base':
-
-        intersect, setdiff, setequal, union
-
-``` r
-women %>% 
-  lm(x ~ y, data =.) %>% 
-  summary()
-```
-
-
-    Call:
-    lm(formula = x ~ y, data = .)
-
-    Residuals:
-         Min       1Q   Median       3Q      Max 
-    -0.83233 -0.26249  0.08314  0.34353  0.49790 
-
-    Coefficients:
-                 Estimate Std. Error t value Pr(>|t|)    
-    (Intercept) 25.723456   1.043746   24.64 2.68e-12 ***
-    y            0.287249   0.007588   37.85 1.09e-14 ***
-    ---
-    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-    Residual standard error: 0.44 on 13 degrees of freedom
-    Multiple R-squared:  0.991, Adjusted R-squared:  0.9903 
-    F-statistic:  1433 on 1 and 13 DF,  p-value: 1.091e-14
-
-F-Test For regression
-
-``` r
-summary(lm(x ~ y))$fstatistic
-```
-
-       value    numdf    dendf 
-    1433.024    1.000   13.000 
-
-Durbin-Watson Test
-
-``` r
-library(lmtest)
-```
-
-    Loading required package: zoo
-
-
-    Attaching package: 'zoo'
-
-    The following objects are masked from 'package:base':
-
-        as.Date, as.Date.numeric
-
-``` r
-dwtest(lm(x ~y))
-```
-
-
-        Durbin-Watson test
-
-    data:  lm(x ~ y)
-    DW = 0.31156, p-value = 9.623e-08
-    alternative hypothesis: true autocorrelation is greater than 0
-
-``` r
-cor(x,y)
-```
-
-    [1] 0.9954948
+# The Future of Work in the Age of AI: A Comprehensive Analysis of Job Displacement, Reskilling Needs, and Salary Trends Across 8 Countries and 12 Industries (2020-2026).
 
 ``` r
 library(readr)
@@ -497,15 +122,13 @@ library(tidyverse)
 ```
 
     ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    ✔ dplyr     1.1.4     ✔ purrr     1.0.4
     ✔ forcats   1.0.0     ✔ stringr   1.5.1
     ✔ ggplot2   4.0.2     ✔ tibble    3.2.1
     ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-    ✔ purrr     1.0.4     
     ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ✖ dplyr::combine()  masks randomForest::combine()
-    ✖ dplyr::filter()   masks stats::filter()
-    ✖ dplyr::lag()      masks stats::lag()
-    ✖ ggplot2::margin() masks randomForest::margin()
+    ✖ dplyr::filter() masks stats::filter()
+    ✖ dplyr::lag()    masks stats::lag()
     ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 
 ``` r
@@ -834,10 +457,6 @@ library(gridExtra)
 
         combine
 
-    The following object is masked from 'package:randomForest':
-
-        combine
-
 **Distribution of Automation Risk**
 
 ``` r
@@ -848,7 +467,7 @@ ggplot(df, aes(x = automation_risk_percent)) +
        y = "Frequency")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-49-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-20-1.png)
 
 This shows how automation risk is distributed across jobs
 
@@ -886,7 +505,7 @@ ggplot(df, aes(industry, automation_risk_percent)) +
   labs(title = "Automation Risk by Industry")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-50-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-21-1.png)
 
 Industries with **higher medians are more vulnerable to AI automation**.
 
@@ -909,7 +528,7 @@ ggplot(df, aes(ai_adoption_level, ai_replacement_score)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-51-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-22-1.png)
 
 If the red line slopes upward → **higher AI adoption increases job
 replacement risk**.
@@ -1000,7 +619,7 @@ cor_matrix
 corrplot(cor_matrix, method = "color", type = "upper")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-52-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-23-1.png)
 
 ## Regression Analysis
 
@@ -1124,7 +743,7 @@ df %>%
        y = "Average Automation Risk")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-56-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-27-1.png)
 
 **From 2024 on wards, there is an increasing trend, therefore, AI impact
 is growing.**
@@ -1200,7 +819,7 @@ ggplot(risk_plot_data, aes(x = reorder(job_role, avg_risk),
        x = "Job Role", y = "Average Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-62-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-33-1.png)
 
 ``` r
 # 1.2 Risk vs Salary Change scatter plot
@@ -1213,7 +832,7 @@ ggplot(df, aes(x = automation_risk_percent, y = salary_change_percent)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-63-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-34-1.png)
 
 ``` r
 # 1.3 Correlation
@@ -1231,7 +850,7 @@ ggplot(df, aes(x = risk_bracket, y = salary_change_percent, fill = risk_bracket)
   theme(legend.position = "none")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-65-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-36-1.png)
 
 ``` r
 # ============================================
@@ -1274,7 +893,7 @@ ggplot(industry_summary, aes(x = reorder(industry, avg_risk), y = avg_risk)) +
   labs(title = "Industry Vulnerability to AI", x = "Industry", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-68-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-39-1.png)
 
 ``` r
 # 3.2 Country summary
@@ -1313,7 +932,7 @@ ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
   labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-70-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-41-1.png)
 
 ``` r
 # Country bar plot
@@ -1323,7 +942,7 @@ ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
   labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-71-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-42-1.png)
 
 ``` r
 # 3.3 Simple heatmap of top industries and countries
@@ -1346,7 +965,7 @@ ggplot(heatmap_data, aes(x = country, y = industry, fill = avg_risk)) +
   labs(title = "Automation Risk: Top Industries vs Countries", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-72-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-43-1.png)
 
 ``` r
 # ============================================
@@ -1363,7 +982,7 @@ ggplot(df, aes(x = skill_gap_index, y = reskilling_urgency_score)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-73-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-44-1.png)
 
 ``` r
 # Correlation
@@ -1371,6 +990,11 @@ cor(df$skill_gap_index, df$reskilling_urgency_score, use = "complete.obs")
 ```
 
     [1] 0.7015534
+
+**Interpretation**
+
+- **Very strong correlation (0.70)** - as skill gap increases,
+  reskilling urgency rises dramatically
 
 ``` r
 # 4.2 Jobs with highest reskilling urgency
@@ -1394,7 +1018,7 @@ ggplot(top_reskilling, aes(x = reorder(job_role, urgency), y = urgency, fill = r
        x = "Job Role", y = "Reskilling Urgency", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-76-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-47-1.png)
 
 ``` r
 # ============================================
@@ -1411,7 +1035,7 @@ ggplot(df, aes(x = remote_feasibility_score, y = automation_risk_percent)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-77-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-48-1.png)
 
 ``` r
 # Correlation
@@ -1430,7 +1054,7 @@ ggplot(df, aes(x = reorder(industry, remote_feasibility_score, FUN = median),
        x = "Industry", y = "Remote Feasibility Score")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-79-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-50-1.png)
 
 ``` r
 # ============================================
@@ -1444,7 +1068,7 @@ ggplot(df, aes(x = education_requirement_level, y = automation_risk_percent)) +
        x = "Education Level (1=Lowest, 5=Highest)", y = "Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-80-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-51-1.png)
 
 ``` r
 # 6.2 Salary by education level
@@ -1454,7 +1078,7 @@ ggplot(df, aes(x = education_requirement_level, y = salary_before_usd / 1000)) +
        x = "Education Level (1=Lowest, 5=Highest)", y = "Salary (thousands USD)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-81-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-52-1.png)
 
 ``` r
 # 6.3 Summary table
@@ -1487,6 +1111,28 @@ edu_summary
 ``` r
 # Load modeling libraries
 library(randomForest)
+```
+
+    randomForest 4.7-1.2
+
+    Type rfNews() to see new features/changes/bug fixes.
+
+
+    Attaching package: 'randomForest'
+
+    The following object is masked from 'package:gridExtra':
+
+        combine
+
+    The following object is masked from 'package:dplyr':
+
+        combine
+
+    The following object is masked from 'package:ggplot2':
+
+        margin
+
+``` r
 #library(caret)
 set.seed(123)
 ```
@@ -1566,7 +1212,7 @@ head(importance_df, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-92-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-63-1.png)
 
 ``` r
 # ============================================
@@ -1624,6 +1270,21 @@ print(paste("Accuracy:", round(accuracy, 3)))
 
     [1] "Accuracy: 0.868"
 
+**Interpretation**
+
+- **86.8% accuracy** in correctly classifying job risk categories
+
+- **Education level** is the most powerful classifier of risk
+
+- **Remote feasibility** strongly predicts low-risk classification
+
+- **Manufacturing industry** strongly predicts high-risk classification
+
+- **India** as a country predicts higher risk classification
+
+- Model misclassifies most often between adjacent risk categories (e.g.,
+  Low↔Medium)
+
 ``` r
 # Feature importance for classification
 class_imp <- data.frame(
@@ -1643,7 +1304,7 @@ head(class_imp, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-100-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-71-1.png)
 
 ``` r
 # ============================================
@@ -1710,7 +1371,7 @@ head(urgency_imp, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-107-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-78-1.png)
 
 ## **Advanced Analysis**
 
@@ -1743,11 +1404,29 @@ plot(yearly$year, yearly$salary_change, type = "b", col = "purple",
      xlab = "Year", ylab = "Salary Change %", main = "Salary Change Trend")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-109-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-80-1.png)
 
 ``` r
 par(mfrow = c(1, 1))
 ```
+
+**Interpretation**
+
+- **Automation risk increasing steadily** from 41.2% to 50.2%
+  (2020-2026)
+
+- **AI adoption doubling** from 32.5% to 64.2% over the period
+
+- **Salary changes turn positive** after 2022, reaching +2.1% by 2026
+
+- Despite higher risk, salaries improve - suggests **value creation**
+  outweighs displacement
+
+- **Acceleration post-2023** - AI adoption rate increases sharply after
+  2023
+
+- **Lag effect**: AI adoption increases first, risk follows, then salary
+  impacts
 
 ``` r
 # Trends by country (top 5 countries)
@@ -1767,7 +1446,7 @@ df %>%
     Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     ℹ Please use `linewidth` instead.
 
-![](Output_files/figure-commonmark/unnamed-chunk-110-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-81-1.png)
 
 ``` r
 # ============================================
@@ -1842,7 +1521,7 @@ ggplot(plot_data, aes(x = PC1, y = PC2, color = cluster, label = job)) +
   theme(legend.position = "bottom")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-116-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-87-1.png)
 
 ``` r
 # ============================================
@@ -1879,7 +1558,7 @@ ggplot(industry_paradox, aes(x = adoption, y = risk, label = industry)) +
     ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
       variable into a factor?
 
-![](Output_files/figure-commonmark/unnamed-chunk-118-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-89-1.png)
 
 ``` r
 # Correlation
@@ -1913,7 +1592,7 @@ ggplot(job_country, aes(x = country, y = avg_risk, fill = job_role)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-121-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-92-1.png)
 
 ``` r
 # Alternative: heatmap
@@ -1929,7 +1608,7 @@ job_country_matrix %>%
        x = "Country", y = "Job Role", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-122-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-93-1.png)
 
 ``` r
 # ============================================

@@ -1054,3 +1054,4 @@ print(paste("Remote work reduces risk (correlation):",
 print(paste("Higher skill gap = higher reskilling urgency (correlation):",
             round(cor(df$skill_gap_index, df$reskilling_urgency_score), 3)))
 ```
+
