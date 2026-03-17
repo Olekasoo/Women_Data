@@ -204,6 +204,16 @@ colSums(is.na(ai_job_replacement_2020_2026_v2))
 names(ai_job_replacement_2020_2026_v2)
 ```
 
+**Loading Required Packages**
+
+Packages help with:
+
+-   data manipulation
+
+-   visualization
+
+-   statistical analysis
+
 ```{r}
 
 #install.packages(c("tidyverse", "skimr", "GGally", "corrplot"))
@@ -215,6 +225,8 @@ library(GGally)
 library(corrplot)
 ```
 
+**Renaming my dataset.**
+
 ```{r}
 df <-ai_job_replacement_2020_2026_v2
 df
@@ -225,34 +237,58 @@ head(df)
 ```
 
 ```{r}
-dim(df)
-```
-
-```{r}
 summary(df)
 ```
 
+**This shows:**
+
+-    minimum
+
+-    maximum
+
+-    mean
+
+-   quartiles
+
+    The average automation risk is about **52%**
+
+```{skim(df)}
+```
+
+This gives:
+
+-   Missing values
+
+-   mean
+
+-   standard deviation
+
+-   Distributions
+
 ```{r}
-# 3. Check for missing values
 colSums(is.na(df))
 ```
 
+Check for missing values
+
 ```{r}
-# 4. Clean column names
 library(tidyverse)
 
 ```
 
+Convert categorical variables to factors
+
 ```{r}
-# 5. Convert categorical variables to factors
 df$job_role <- as.factor(df$job_role)
 df$industry <- as.factor(df$industry)
 df$country <- as.factor(df$country)
 df$education_requirement_level <- as.factor(df$education_requirement_level)
 ```
 
+Check factor levels
+
 ```{r}
-# 6. Check factor levels
+
 levels(df$job_role)[1:20]
 levels(df$industry)
 levels(df$country)
@@ -282,14 +318,16 @@ df <- df %>%
   )
 ```
 
+Make them factors
+
 ```{r}
-# 8. Make them factors
 df$year_category <- factor(df$year_category, levels = c("Past", "Present", "Future"))
 df$risk_bracket <- factor(df$risk_bracket, levels = c("Low Risk", "Medium Risk", "High Risk"))
 ```
 
+Quick summary of numerical columns
+
 ```{r}
-# 9. Quick summary of numerical columns
 df %>%
   select(where(is.numeric)) %>%
   summary()
@@ -301,6 +339,20 @@ write.csv(df, "ai_job_replacement_cleaned.csv", row.names = FALSE)
 
 ```
 
+Compute:
+
+-   mean automation risk
+
+-   average AI replacement score
+
+-   Average salary before AI
+
+```{r}
+mean(df$automation_risk_percent)
+mean(df$ai_replacement_score)
+mean(df$salary_before_usd)
+```
+
 ## **Descriptive Analysis with Visualizations**
 
 ```{r}
@@ -308,6 +360,153 @@ write.csv(df, "ai_job_replacement_cleaned.csv", row.names = FALSE)
 library(ggplot2)
 library(viridis)
 library(gridExtra)
+```
+
+**Distribution of Automation Risk**
+
+```{r}
+ggplot(df, aes(x = automation_risk_percent)) +
+  geom_histogram(bins = 30, fill = "steelblue") +
+  labs(title = "Distribution of Automation Risk",
+       x = "Automation Risk (%)",
+       y = "Frequency")
+```
+
+This shows how automation risk is distributed across jobs
+
+-   Right skewed \$\\rightarrow\$ most jobs at risk
+
+-   Left skewed -\> most jobs high risk
+
+## Automation Risk by Industry
+
+**Which industries are at most risk?**
+
+```{r}
+df %>%
+  group_by(industry) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  arrange(desc(mean_risk))
+
+ggplot(df, aes(industry, automation_risk_percent)) +
+  geom_boxplot(fill = "orange") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Automation Risk by Industry")
+```
+
+Industries with **higher medians are more vulnerable to AI automation**.
+
+## AI Adoption Vs Job Replacements
+
+*Objective*
+
+**Does higher AI adoption increase job replacement?**
+
+*Scatter Plot*
+
+```{r}
+ggplot(df, aes(ai_adoption_level, ai_replacement_score)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "AI Adoption vs Job Replacement",
+       x = "AI Adoption Level",
+       y = "AI Replacement Score")
+```
+
+If the red line slopes upward → **higher AI adoption increases job replacement risk**.
+
+Currently, the red line does not slope upwards, therefore, they are not directly proportional.
+
+## Correlation Analysis
+
+*Checking relationships between numeric variables*
+
+```{r}
+numeric_data <- df %>%
+  select(where(is.numeric))
+cor_matrix <- cor(numeric_data)
+
+cor_matrix
+corrplot(cor_matrix, method = "color", type = "upper")
+```
+
+## Regression Analysis
+
+*Objective*
+
+**Does AI adoption influence job replacement**
+
+*Model*
+
+```{r}
+model <- lm(ai_replacement_score ~ ai_adoption_level +
+              skill_gap_index +
+              automation_risk_percent,
+            data = df)
+
+summary(model)
+```
+
+ai_adoption_level coefficient = 0.42
+
+p \< 0.001, Then **AI adoption significantly increases job replacement risk**
+
+## Salary Impact Analysis
+
+*Objective*
+
+**Does AI affect salary change**
+
+```{r}
+model_salary <- lm(salary_change_percent ~ ai_adoption_level +
+                     skill_demand_growth_percent,
+                   data = df)
+
+summary(model_salary)
+```
+
+**Interpretation:**
+
+Positive coefficient → salaries increasing with AI
+
+**Top Jobs Most at Risk**
+
+```{r}
+df %>%
+  group_by(job_role) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  arrange(desc(mean_risk)) %>%
+  head(10)
+```
+
+## Time Trend(2020-2026)
+
+*Objective*
+
+**Is automation increasing over time?**
+
+```{r}
+df %>%
+  group_by(year) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  ggplot(aes(year, mean_risk)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Automation Risk Over Time",
+       y = "Average Automation Risk")
+```
+
+**From 2024 on wards, there is an increasing trend, therefore, AI impact is growing.**
+
+## Reskilling Needs
+
+**Which industries need reskilling most?**
+
+```{r}
+df %>%
+  group_by(industry) %>%
+  summarise(reskill = mean(reskilling_urgency_score)) %>%
+  arrange(desc(reskill))
 ```
 
 ```{r}

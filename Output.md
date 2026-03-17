@@ -8,6 +8,13 @@
 - [Hypothesis Tests](#hypothesis-tests)
   - [**Descriptive Analysis with
     Visualizations**](#descriptive-analysis-with-visualizations)
+  - [Automation Risk by Industry](#automation-risk-by-industry)
+  - [AI Adoption Vs Job Replacements](#ai-adoption-vs-job-replacements)
+  - [Correlation Analysis](#correlation-analysis)
+  - [Regression Analysis](#regression-analysis)
+  - [Salary Impact Analysis](#salary-impact-analysis)
+  - [Time Trend(2020-2026)](#time-trend2020-2026)
+  - [Reskilling Needs](#reskilling-needs)
   - [**Simple Predictive Models**](#simple-predictive-models)
   - [**Advanced Analysis**](#advanced-analysis)
 
@@ -192,7 +199,7 @@ predict(randomForest(y ~x, ntree =50), data.frame(x =73))
 ```
 
            1 
-    157.5343 
+    157.0463 
 
 ``` r
 t.test(y, mu =140)
@@ -472,6 +479,16 @@ names(ai_job_replacement_2020_2026_v2)
     [11] "remote_feasibility_score"    "ai_adoption_level"          
     [13] "education_requirement_level" "reskilling_urgency_score"   
 
+**Loading Required Packages**
+
+Packages help with:
+
+- data manipulation
+
+- visualization
+
+- statistical analysis
+
 ``` r
 #install.packages(c("tidyverse", "skimr", "GGally", "corrplot"))
 
@@ -498,6 +515,8 @@ library(corrplot)
 ```
 
     corrplot 0.95 loaded
+
+**Renaming my dataset.**
 
 ``` r
 df <-ai_job_replacement_2020_2026_v2
@@ -544,12 +563,6 @@ head(df)
     #   education_requirement_level <dbl>, reskilling_urgency_score <dbl>
 
 ``` r
-dim(df)
-```
-
-    [1] 15000    14
-
-``` r
 summary(df)
 ```
 
@@ -582,8 +595,32 @@ summary(df)
      3rd Qu.:74.80     3rd Qu.:4.000               3rd Qu.:44.699          
      Max.   :99.98     Max.   :5.000               Max.   :71.579          
 
+**This shows:**
+
+- minimum
+
+- maximum
+
+- mean
+
+- quartiles
+
+  The average automation risk is about **52%**
+
+``` {skim(df)}
+```
+
+This gives:
+
+- Missing values
+
+- mean
+
+- standard deviation
+
+- Distributions
+
 ``` r
-# 3. Check for missing values
 colSums(is.na(df))
 ```
 
@@ -602,21 +639,24 @@ colSums(is.na(df))
     education_requirement_level    reskilling_urgency_score 
                               0                           0 
 
+Check for missing values
+
 ``` r
-# 4. Clean column names
 library(tidyverse)
 ```
 
+Convert categorical variables to factors
+
 ``` r
-# 5. Convert categorical variables to factors
 df$job_role <- as.factor(df$job_role)
 df$industry <- as.factor(df$industry)
 df$country <- as.factor(df$country)
 df$education_requirement_level <- as.factor(df$education_requirement_level)
 ```
 
+Check factor levels
+
 ``` r
-# 6. Check factor levels
 levels(df$job_role)[1:20]
 ```
 
@@ -705,14 +745,16 @@ df <- df %>%
   )
 ```
 
+Make them factors
+
 ``` r
-# 8. Make them factors
 df$year_category <- factor(df$year_category, levels = c("Past", "Present", "Future"))
 df$risk_bracket <- factor(df$risk_bracket, levels = c("Low Risk", "Medium Risk", "High Risk"))
 ```
 
+Quick summary of numerical columns
+
 ``` r
-# 9. Quick summary of numerical columns
 df %>%
   select(where(is.numeric)) %>%
   summary()
@@ -745,6 +787,32 @@ df %>%
 write.csv(df, "ai_job_replacement_cleaned.csv", row.names = FALSE)
 ```
 
+Compute:
+
+- mean automation risk
+
+- average AI replacement score
+
+- Average salary before AI
+
+``` r
+mean(df$automation_risk_percent)
+```
+
+    [1] 46.17635
+
+``` r
+mean(df$ai_replacement_score)
+```
+
+    [1] 46.15591
+
+``` r
+mean(df$salary_before_usd)
+```
+
+    [1] 89771.38
+
 ## **Descriptive Analysis with Visualizations**
 
 ``` r
@@ -769,6 +837,320 @@ library(gridExtra)
     The following object is masked from 'package:randomForest':
 
         combine
+
+**Distribution of Automation Risk**
+
+``` r
+ggplot(df, aes(x = automation_risk_percent)) +
+  geom_histogram(bins = 30, fill = "steelblue") +
+  labs(title = "Distribution of Automation Risk",
+       x = "Automation Risk (%)",
+       y = "Frequency")
+```
+
+![](Output_files/figure-commonmark/unnamed-chunk-49-1.png)
+
+This shows how automation risk is distributed across jobs
+
+- Right skewed \$\rightarrow\$ most jobs at risk
+
+- Left skewed -\> most jobs high risk
+
+## Automation Risk by Industry
+
+**Which industries are at most risk?**
+
+``` r
+df %>%
+  group_by(industry) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  arrange(desc(mean_risk))
+```
+
+    # A tibble: 8 × 2
+      industry       mean_risk
+      <fct>              <dbl>
+    1 Energy              47.0
+    2 Manufacturing       46.9
+    3 Finance             46.4
+    4 Retail              46.1
+    5 Transportation      45.9
+    6 Healthcare          45.8
+    7 Technology          45.7
+    8 Education           45.6
+
+``` r
+ggplot(df, aes(industry, automation_risk_percent)) +
+  geom_boxplot(fill = "orange") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Automation Risk by Industry")
+```
+
+![](Output_files/figure-commonmark/unnamed-chunk-50-1.png)
+
+Industries with **higher medians are more vulnerable to AI automation**.
+
+## AI Adoption Vs Job Replacements
+
+*Objective*
+
+**Does higher AI adoption increase job replacement?**
+
+*Scatter Plot*
+
+``` r
+ggplot(df, aes(ai_adoption_level, ai_replacement_score)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(title = "AI Adoption vs Job Replacement",
+       x = "AI Adoption Level",
+       y = "AI Replacement Score")
+```
+
+    `geom_smooth()` using formula = 'y ~ x'
+
+![](Output_files/figure-commonmark/unnamed-chunk-51-1.png)
+
+If the red line slopes upward → **higher AI adoption increases job
+replacement risk**.
+
+Currently, the red line does not slope upwards, therefore, they are not
+directly proportional.
+
+## Correlation Analysis
+
+*Checking relationships between numeric variables*
+
+``` r
+numeric_data <- df %>%
+  select(where(is.numeric))
+cor_matrix <- cor(numeric_data)
+
+cor_matrix
+```
+
+                                         year automation_risk_percent
+    year                         1.0000000000            -0.003177902
+    automation_risk_percent     -0.0031779020             1.000000000
+    ai_replacement_score        -0.0018649175             0.964406914
+    skill_gap_index              0.0002149837             0.009731358
+    salary_before_usd            0.0051486661             0.016663387
+    salary_change_percent        0.0027564122            -0.005281448
+    skill_demand_growth_percent  0.0075615451            -0.015765450
+    remote_feasibility_score    -0.0045833250             0.001511034
+    ai_adoption_level           -0.0018753708             0.001905198
+    reskilling_urgency_score    -0.0017621049             0.704171753
+                                ai_replacement_score skill_gap_index
+    year                               -0.0018649175    0.0002149837
+    automation_risk_percent             0.9644069142    0.0097313580
+    ai_replacement_score                1.0000000000    0.0068721045
+    skill_gap_index                     0.0068721045    1.0000000000
+    salary_before_usd                   0.0139036584   -0.0149148580
+    salary_change_percent              -0.0094360027   -0.0033685928
+    skill_demand_growth_percent        -0.0117838975    0.0013248802
+    remote_feasibility_score            0.0002398067    0.0031803855
+    ai_adoption_level                  -0.0008107562    0.0025775967
+    reskilling_urgency_score            0.6775292553    0.7015534416
+                                salary_before_usd salary_change_percent
+    year                             0.0051486661          0.0027564122
+    automation_risk_percent          0.0166633871         -0.0052814482
+    ai_replacement_score             0.0139036584         -0.0094360027
+    skill_gap_index                 -0.0149148580         -0.0033685928
+    salary_before_usd                1.0000000000         -0.0009615465
+    salary_change_percent           -0.0009615465          1.0000000000
+    skill_demand_growth_percent     -0.0018759623          0.0058373820
+    remote_feasibility_score        -0.0041457063         -0.0014655200
+    ai_adoption_level               -0.0070024989          0.0004454823
+    reskilling_urgency_score         0.0024055626         -0.0022007166
+                                skill_demand_growth_percent
+    year                                        0.007561545
+    automation_risk_percent                    -0.015765450
+    ai_replacement_score                       -0.011783898
+    skill_gap_index                             0.001324880
+    salary_before_usd                          -0.001875962
+    salary_change_percent                       0.005837382
+    skill_demand_growth_percent                 1.000000000
+    remote_feasibility_score                   -0.005922234
+    ai_adoption_level                           0.010595946
+    reskilling_urgency_score                   -0.008097230
+                                remote_feasibility_score ai_adoption_level
+    year                                   -0.0045833250     -0.0018753708
+    automation_risk_percent                 0.0015110343      0.0019051981
+    ai_replacement_score                    0.0002398067     -0.0008107562
+    skill_gap_index                         0.0031803855      0.0025775967
+    salary_before_usd                      -0.0041457063     -0.0070024989
+    salary_change_percent                  -0.0014655200      0.0004454823
+    skill_demand_growth_percent            -0.0059222342      0.0105959455
+    remote_feasibility_score                1.0000000000      0.0046348252
+    ai_adoption_level                       0.0046348252      1.0000000000
+    reskilling_urgency_score                0.0037659425      0.0031445336
+                                reskilling_urgency_score
+    year                                    -0.001762105
+    automation_risk_percent                  0.704171753
+    ai_replacement_score                     0.677529255
+    skill_gap_index                          0.701553442
+    salary_before_usd                        0.002405563
+    salary_change_percent                   -0.002200717
+    skill_demand_growth_percent             -0.008097230
+    remote_feasibility_score                 0.003765942
+    ai_adoption_level                        0.003144534
+    reskilling_urgency_score                 1.000000000
+
+``` r
+corrplot(cor_matrix, method = "color", type = "upper")
+```
+
+![](Output_files/figure-commonmark/unnamed-chunk-52-1.png)
+
+## Regression Analysis
+
+*Objective*
+
+**Does AI adoption influence job replacement**
+
+*Model*
+
+``` r
+model <- lm(ai_replacement_score ~ ai_adoption_level +
+              skill_gap_index +
+              automation_risk_percent,
+            data = df)
+
+summary(model)
+```
+
+
+    Call:
+    lm(formula = ai_replacement_score ~ ai_adoption_level + skill_gap_index + 
+        automation_risk_percent, data = df)
+
+    Residuals:
+        Min      1Q  Median      3Q     Max 
+    -18.621  -3.744   0.000   3.748  19.052 
+
+    Coefficients:
+                             Estimate Std. Error t value Pr(>|t|)    
+    (Intercept)              0.407133   0.163171   2.495   0.0126 *  
+    ai_adoption_level       -0.002046   0.001672  -1.224   0.2211    
+    skill_gap_index         -0.001944   0.001675  -1.161   0.2457    
+    automation_risk_percent  0.995052   0.002228 446.666   <2e-16 ***
+    ---
+    Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+    Residual standard error: 5.91 on 14996 degrees of freedom
+    Multiple R-squared:  0.9301,    Adjusted R-squared:  0.9301 
+    F-statistic: 6.651e+04 on 3 and 14996 DF,  p-value: < 2.2e-16
+
+ai_adoption_level coefficient = 0.42
+
+p \< 0.001, Then **AI adoption significantly increases job replacement
+risk**
+
+## Salary Impact Analysis
+
+*Objective*
+
+**Does AI affect salary change**
+
+``` r
+model_salary <- lm(salary_change_percent ~ ai_adoption_level +
+                     skill_demand_growth_percent,
+                   data = df)
+
+summary(model_salary)
+```
+
+
+    Call:
+    lm(formula = salary_change_percent ~ ai_adoption_level + skill_demand_growth_percent, 
+        data = df)
+
+    Residuals:
+        Min      1Q  Median      3Q     Max 
+    -38.554  -6.755   0.036   6.561  36.797 
+
+    Coefficients:
+                                 Estimate Std. Error t value Pr(>|t|)
+    (Intercept)                 0.0781277  0.1681014   0.465    0.642
+    ai_adoption_level           0.0001333  0.0028377   0.047    0.963
+    skill_demand_growth_percent 0.0058761  0.0082260   0.714    0.475
+
+    Residual standard error: 10.03 on 14997 degrees of freedom
+    Multiple R-squared:  3.422e-05, Adjusted R-squared:  -9.913e-05 
+    F-statistic: 0.2566 on 2 and 14997 DF,  p-value: 0.7737
+
+**Interpretation:**
+
+Positive coefficient → salaries increasing with AI
+
+**Top Jobs Most at Risk**
+
+``` r
+df %>%
+  group_by(job_role) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  arrange(desc(mean_risk)) %>%
+  head(10)
+```
+
+    # A tibble: 10 × 2
+       job_role             mean_risk
+       <fct>                    <dbl>
+     1 Truck Driver              60.7
+     2 Customer Support Rep      59.9
+     3 Marketing Specialist      45.4
+     4 Mechanical Engineer       45.4
+     5 Teacher                   45.1
+     6 HR Manager                45.1
+     7 Accountant                45.0
+     8 Financial Analyst         44.7
+     9 Data Analyst              35.5
+    10 Software Engineer         34.9
+
+## Time Trend(2020-2026)
+
+*Objective*
+
+**Is automation increasing over time?**
+
+``` r
+df %>%
+  group_by(year) %>%
+  summarise(mean_risk = mean(automation_risk_percent)) %>%
+  ggplot(aes(year, mean_risk)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Automation Risk Over Time",
+       y = "Average Automation Risk")
+```
+
+![](Output_files/figure-commonmark/unnamed-chunk-56-1.png)
+
+**From 2024 on wards, there is an increasing trend, therefore, AI impact
+is growing.**
+
+## Reskilling Needs
+
+**Which industries need reskilling most?**
+
+``` r
+df %>%
+  group_by(industry) %>%
+  summarise(reskill = mean(reskilling_urgency_score)) %>%
+  arrange(desc(reskill))
+```
+
+    # A tibble: 8 × 2
+      industry       reskill
+      <fct>            <dbl>
+    1 Retail            36.2
+    2 Energy            36.1
+    3 Manufacturing     36.0
+    4 Transportation    35.9
+    5 Finance           35.9
+    6 Technology        35.8
+    7 Healthcare        35.5
+    8 Education         35.4
 
 ``` r
 # Set theme
@@ -818,7 +1200,7 @@ ggplot(risk_plot_data, aes(x = reorder(job_role, avg_risk),
        x = "Job Role", y = "Average Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-53-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-62-1.png)
 
 ``` r
 # 1.2 Risk vs Salary Change scatter plot
@@ -831,7 +1213,7 @@ ggplot(df, aes(x = automation_risk_percent, y = salary_change_percent)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-54-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-63-1.png)
 
 ``` r
 # 1.3 Correlation
@@ -849,7 +1231,7 @@ ggplot(df, aes(x = risk_bracket, y = salary_change_percent, fill = risk_bracket)
   theme(legend.position = "none")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-56-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-65-1.png)
 
 ``` r
 # ============================================
@@ -892,7 +1274,7 @@ ggplot(industry_summary, aes(x = reorder(industry, avg_risk), y = avg_risk)) +
   labs(title = "Industry Vulnerability to AI", x = "Industry", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-59-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-68-1.png)
 
 ``` r
 # 3.2 Country summary
@@ -931,7 +1313,7 @@ ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
   labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-61-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-70-1.png)
 
 ``` r
 # Country bar plot
@@ -941,7 +1323,7 @@ ggplot(country_summary, aes(x = reorder(country, avg_risk), y = avg_risk)) +
   labs(title = "Country Vulnerability to AI", x = "Country", y = "Avg Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-62-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-71-1.png)
 
 ``` r
 # 3.3 Simple heatmap of top industries and countries
@@ -964,7 +1346,7 @@ ggplot(heatmap_data, aes(x = country, y = industry, fill = avg_risk)) +
   labs(title = "Automation Risk: Top Industries vs Countries", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-63-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-72-1.png)
 
 ``` r
 # ============================================
@@ -981,7 +1363,7 @@ ggplot(df, aes(x = skill_gap_index, y = reskilling_urgency_score)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-64-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-73-1.png)
 
 ``` r
 # Correlation
@@ -1012,7 +1394,7 @@ ggplot(top_reskilling, aes(x = reorder(job_role, urgency), y = urgency, fill = r
        x = "Job Role", y = "Reskilling Urgency", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-67-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-76-1.png)
 
 ``` r
 # ============================================
@@ -1029,7 +1411,7 @@ ggplot(df, aes(x = remote_feasibility_score, y = automation_risk_percent)) +
 
     `geom_smooth()` using formula = 'y ~ x'
 
-![](Output_files/figure-commonmark/unnamed-chunk-68-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-77-1.png)
 
 ``` r
 # Correlation
@@ -1048,7 +1430,7 @@ ggplot(df, aes(x = reorder(industry, remote_feasibility_score, FUN = median),
        x = "Industry", y = "Remote Feasibility Score")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-70-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-79-1.png)
 
 ``` r
 # ============================================
@@ -1062,7 +1444,7 @@ ggplot(df, aes(x = education_requirement_level, y = automation_risk_percent)) +
        x = "Education Level (1=Lowest, 5=Highest)", y = "Automation Risk (%)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-71-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-80-1.png)
 
 ``` r
 # 6.2 Salary by education level
@@ -1072,7 +1454,7 @@ ggplot(df, aes(x = education_requirement_level, y = salary_before_usd / 1000)) +
        x = "Education Level (1=Lowest, 5=Highest)", y = "Salary (thousands USD)")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-72-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-81-1.png)
 
 ``` r
 # 6.3 Summary table
@@ -1184,7 +1566,7 @@ head(importance_df, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-83-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-92-1.png)
 
 ``` r
 # ============================================
@@ -1261,7 +1643,7 @@ head(class_imp, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-91-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-100-1.png)
 
 ``` r
 # ============================================
@@ -1328,7 +1710,7 @@ head(urgency_imp, 10) %>%
        x = "Feature", y = "Importance")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-98-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-107-1.png)
 
 ## **Advanced Analysis**
 
@@ -1361,7 +1743,7 @@ plot(yearly$year, yearly$salary_change, type = "b", col = "purple",
      xlab = "Year", ylab = "Salary Change %", main = "Salary Change Trend")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-100-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-109-1.png)
 
 ``` r
 par(mfrow = c(1, 1))
@@ -1385,7 +1767,7 @@ df %>%
     Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     ℹ Please use `linewidth` instead.
 
-![](Output_files/figure-commonmark/unnamed-chunk-101-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-110-1.png)
 
 ``` r
 # ============================================
@@ -1460,7 +1842,7 @@ ggplot(plot_data, aes(x = PC1, y = PC2, color = cluster, label = job)) +
   theme(legend.position = "bottom")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-107-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-116-1.png)
 
 ``` r
 # ============================================
@@ -1497,7 +1879,7 @@ ggplot(industry_paradox, aes(x = adoption, y = risk, label = industry)) +
     ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
       variable into a factor?
 
-![](Output_files/figure-commonmark/unnamed-chunk-109-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-118-1.png)
 
 ``` r
 # Correlation
@@ -1531,7 +1913,7 @@ ggplot(job_country, aes(x = country, y = avg_risk, fill = job_role)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-112-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-121-1.png)
 
 ``` r
 # Alternative: heatmap
@@ -1547,7 +1929,7 @@ job_country_matrix %>%
        x = "Country", y = "Job Role", fill = "Risk %")
 ```
 
-![](Output_files/figure-commonmark/unnamed-chunk-113-1.png)
+![](Output_files/figure-commonmark/unnamed-chunk-122-1.png)
 
 ``` r
 # ============================================
